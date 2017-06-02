@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE simulation [
+<!ENTITY Npts "64">
+<!ENTITY L "3.0e-5">
+]>
+
+<simulation xmds-version="2">
+<name> bhd-coherent-moments </name>
+
+<author> Ryan Kidd </author>
+<description>
+	The Bose-Hubbard model for the driven dimer with initial Bloch state and truncated Wigner evolution. This script obtains averages and standard deviations of Wigner moments.
+</description>
+
+<features>
+	<openmp />
+	<auto_vectorise />
+	<globals>
+		<![CDATA[
+			real Jt;
+			real tpole;
+			real p2;
+		]]>
+	</globals>
+	<validation kind="run-time" />
+	<arguments>
+		<argument name="chi" type="real" default_value = "-0.001" />
+		<argument name="J" type="real" default_value = "1.0" />
+		<argument name="epsilon" type="real" default_value = "0.2" />
+		<argument name="frequency" type="real" default_value = "1.37" />
+		<argument name="N" type="real" default_value = "1000.0" />
+		<argument name="n" type="real" default_value = "0.0" />
+		<argument name="paths" type="real" default_value = "100" />
+		<argument name="interval" type="real" default_value = "10" />
+		<![CDATA[
+			tpole = asin(sqrt(n/N));
+			p2 = 0.5*sqrt(2*N + 1 + 2*sqrt(N*N + N));
+		]]>
+	</arguments>
+</features>
+
+<geometry>
+	<propagation_dimension> t </propagation_dimension>
+</geometry>
+
+<driver name="adaptive-mpi-multi-path" paths="paths" />
+
+<noise_vector name="noiseGauss" kind="gaussian" type="real" method="dsfmt" seed="791 207 830" >
+	<components> da1r da1i da2 </components>
+</noise_vector>
+
+<noise_vector name="noiseUnif" kind="uniform" type="real" method="dsfmt" seed="209 885 942" >
+	<components> theta2 </components>
+</noise_vector>
+
+<vector name="amplitudes" type="complex">
+	<components> a1 a2 </components>
+	<initialisation>
+		<dependencies> noiseGauss noiseUnif </dependencies>
+		<![CDATA[
+			a1 = cos(tpole)*0.5*(da1r + i*da1i) + sin(tpole)*(p2 + da2/(4*p2)) * (cos(2*M_PI*theta2) + i*sin(2*M_PI*theta2));
+			a2 = -sin(tpole)*0.5*(da1r + i*da1i) + cos(tpole)*(p2 + da2/(4*p2)) * (cos(2*M_PI*theta2) + i*sin(2*M_PI*theta2));
+		]]>
+	</initialisation>
+</vector>
+
+<sequence>
+	<integrate algorithm="ARK45" interval="interval" tolerance="1e-5" >
+		<samples> 1000 </samples>
+		<operators>
+			<integration_vectors> amplitudes </integration_vectors>
+			<![CDATA[
+				Jt = J*(1 + epsilon*cos(frequency*t));
+				da1_dt = i*Jt*a2 - 2*i*chi*(mod2(a1) - 1)*a1;
+				da2_dt = i*Jt*a1 - 2*i*chi*(mod2(a2) - 1)*a2;
+			]]>
+		</operators>
+	</integrate>
+</sequence>
+
+<output format="hdf5" filename="bhd-coherent-moments.xsil">
+	<sampling_group initial_sample="yes">
+		<moments> a12 a22 a14 a24 a12a22 ca2a1r ca2a1i ca1a2r ca1a2i ca22a12r ca22a12i ca12a22r ca12a22i </moments>
+		<dependencies> amplitudes </dependencies>
+		<![CDATA[
+			a12 = mod2(a1);
+			a22 = mod2(a2);
+			a14 = mod2(a1*a1);
+			a24 = mod2(a2*a2);
+			a12a22 = mod2(a1*a2);
+			ca2a1r = Re(conj(a2)*a1);
+			ca1a2r = Re(conj(a1)*a2);
+			ca2a1i = Im(conj(a2)*a1);
+			ca1a2i = Im(conj(a1)*a2);
+			ca22a12r = Re(conj(a2)*conj(a2)*a1*a1);
+			ca12a22r = Re(conj(a1)*conj(a1)*a2*a2);
+			ca22a12i = Im(conj(a2)*conj(a2)*a1*a1);
+			ca12a22i = Im(conj(a1)*conj(a1)*a2*a2);
+		]]>
+	</sampling_group>
+</output>
+
+</simulation>

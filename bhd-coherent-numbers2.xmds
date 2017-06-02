@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<simulation xmds-version="2">
+<name> bhd-coherent-numbers2 </name>
+
+<author> Ryan Kidd </author>
+<description>
+	The Bose-Hubbard model for the driven dimer with initial Bloch state and truncated Wigner evolution. This script obtains rounded occupation numbers of stochastic trajectories under a perturbation for several iterations for the purpose of calculating the Bhattacharyya distance with standard error.
+</description>
+
+<features>
+	<openmp />
+	<auto_vectorise />
+	<globals>
+		<![CDATA[
+			real Jt;
+			real pchi;
+			real tpole;
+			real p2;
+		]]>
+	</globals>
+	<validation kind="run-time" />
+	<arguments>
+		<argument name="chi" type="real" default_value = "-0.001" />
+		<argument name="pert" type="real" default_value = "-0.01" />
+		<argument name="J" type="real" default_value = "1" />
+		<argument name="epsilon" type="real" default_value = "0.2" />
+		<argument name="frequency" type="real" default_value = "1.37" />
+		<argument name="N" type="real" default_value = "1000" />
+		<argument name="n" type="real" default_value = "220" />
+		<argument name="interval" type="real" default_value = "10" />
+		<![CDATA[
+			pchi = chi*(1 + pert);
+			tpole = asin(sqrt(n/N));
+			p2 = 0.5*sqrt(2*N + 1 + 2*sqrt(N*N + N));
+		]]>
+	</arguments>
+</features>
+
+<geometry>
+	<propagation_dimension> t </propagation_dimension>
+	<transverse_dimensions>
+		<dimension name="trajectories" type="integer" lattice="100000" domain="(1,100000)" />
+		<dimension name="iterations" type="integer" lattice="10" domain="(1,10)" />
+	</transverse_dimensions>
+</geometry>
+
+<driver name="distributed-mpi" />
+
+<noise_vector name="noiseGauss" kind="gaussian" type="real" method="dsfmt" seed="791 207 830" dimensions="trajectories iterations" >
+	<components> da1r da1i da2 </components>
+</noise_vector>
+
+<noise_vector name="noiseUnif" kind="uniform" type="real" method="dsfmt" seed="209 885 942" dimensions="trajectories iterations" >
+	<components> theta2 </components>
+</noise_vector>
+
+<vector name="amplitudes" type="complex">
+	<components> a1 a2 pa1 pa2 </components>
+	<initialisation>
+		<dependencies> noiseGauss noiseUnif </dependencies>
+		<![CDATA[
+			a1 = cos(tpole)*0.5*(da1r + i*da1i) + sin(tpole)*(p2 + da2/(4*p2)) * (cos(2*M_PI*theta2) + i*sin(2*M_PI*theta2));
+			a2 = -sin(tpole)*0.5*(da1r + i*da1i) + cos(tpole)*(p2 + da2/(4*p2)) * (cos(2*M_PI*theta2) + i*sin(2*M_PI*theta2));
+			pa1 = a1;
+			pa2 = a2;
+		]]>
+	</initialisation>
+</vector>
+
+<sequence>
+	<integrate algorithm="ARK45" interval="interval" tolerance="1e-5" >
+		<samples> 100 </samples>
+		<operators>
+			<integration_vectors> amplitudes </integration_vectors>
+			<![CDATA[
+				Jt = J*(1 + epsilon*cos(frequency*t));
+				da1_dt = i*Jt*a2 - 2*i*chi*(mod2(a1) - 1)*a1;
+				da2_dt = i*Jt*a1 - 2*i*chi*(mod2(a2) - 1)*a2;
+				dpa1_dt = i*Jt*pa2 - 2*i*pchi*(mod2(pa1) - 1)*pa1;
+				dpa2_dt = i*Jt*pa1 - 2*i*pchi*(mod2(pa2) - 1)*pa2;
+			]]>
+		</operators>
+	</integrate>
+</sequence>
+
+<output format="hdf5" filename="bhd-coherent-numbers2.xsil">
+	<sampling_group basis="trajectories iterations" initial_sample="yes">
+		<dependencies> amplitudes </dependencies>
+		<moments> n1 pn1 </moments>
+		<![CDATA[
+			n1 = round(mod2(a1) - 0.5);
+			pn1 = round(mod2(pa1) - 0.5);
+		]]>
+	</sampling_group>
+</output>
+
+</simulation>

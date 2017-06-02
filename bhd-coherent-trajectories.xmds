@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE simulation [
+<!ENTITY Npts "64">
+<!ENTITY L "3.0e-5">
+]>
+
+<simulation xmds-version="2">
+<name> bhd-coherent-trajectories </name>
+
+<author> Ryan Kidd </author>
+<description>
+	The Bose-Hubbard model for the driven dimer with initial Bloch state and truncated Wigner evolution. This script obtains individual stochastic trajectories.
+</description>
+
+<features>
+	<openmp />
+	<auto_vectorise />
+	<globals>
+		<![CDATA[
+			real Jt;
+			real tpole;
+			real p2;
+			real interval;
+		]]>
+	</globals>
+	<validation kind="run-time" />
+	<arguments>
+		<argument name="chi" type="real" default_value = "-0.001" />
+		<argument name="J" type="real" default_value = "1" />
+		<argument name="epsilon" type="real" default_value = "0.2" />
+		<argument name="frequency" type="real" default_value = "1.37" />
+		<argument name="N" type="real" default_value = "1000" />
+		<argument name="n" type="real" default_value = "0" />
+		<argument name="periods" type="real" default_value = "10" />
+		<![CDATA[
+			interval = 2*M_PI/frequency*periods;
+			tpole = asin(sqrt(n/N));
+			p2 = 0.5*sqrt(2*N + 1 + 2*sqrt(N*N + N));
+		]]>
+	</arguments>
+</features>
+
+<geometry>
+	<propagation_dimension> t </propagation_dimension>
+	<transverse_dimensions>
+		<dimension name="trajectories" type="integer" lattice="100000" domain="(1,100000)" />
+	</transverse_dimensions>
+</geometry>
+
+<driver name="distributed-mpi" />
+
+<noise_vector name="noiseGauss" kind="gaussian" type="real" method="dsfmt" seed="791 207 830" dimensions="trajectories" >
+	<components> da1r da1i da2 </components>
+</noise_vector>
+
+<noise_vector name="noiseUnif" kind="uniform" type="real" method="dsfmt" seed="209 885 942" dimensions="trajectories" >
+	<components> theta2 </components>
+</noise_vector>
+
+<vector name="amplitudes" type="complex">
+	<components> a1 a2 </components>
+	<initialisation>
+		<dependencies> noiseGauss noiseUnif </dependencies>
+		<![CDATA[
+			a1 = cos(tpole)*0.5*(da1r + i*da1i) + sin(tpole)*(p2 + da2/(4*p2)) * (cos(2*M_PI*theta2) + i*sin(2*M_PI*theta2));
+			a2 = -sin(tpole)*0.5*(da1r + i*da1i) + cos(tpole)*(p2 + da2/(4*p2)) * (cos(2*M_PI*theta2) + i*sin(2*M_PI*theta2));
+		]]>
+	</initialisation>
+</vector>
+
+<sequence>
+	<integrate algorithm="ARK45" interval="interval" tolerance="1e-5" >
+		<samples> 10 </samples>
+		<operators>
+			<integration_vectors> amplitudes </integration_vectors>
+			<![CDATA[
+				Jt = J*(1 + epsilon*cos(frequency*t));
+				da1_dt = i*Jt*a2 - 2*i*chi*(mod2(a1) - 1)*a1;
+				da2_dt = i*Jt*a1 - 2*i*chi*(mod2(a2) - 1)*a2;
+			]]>
+		</operators>
+	</integrate>
+</sequence>
+
+<output format="hdf5" filename="bhd-coherent-trajectories.xsil">
+	<sampling_group basis="trajectories" initial_sample="yes">
+		<moments> a1r a1i a2r a2i </moments>
+		<dependencies> amplitudes </dependencies>
+		<![CDATA[
+			a1r = Re(a1);
+			a1i = Im(a1);
+			a2r = Re(a2);
+			a2i = Im(a2);
+		]]>
+	</sampling_group>
+</output>
+
+</simulation>
