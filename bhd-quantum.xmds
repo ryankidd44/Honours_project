@@ -5,7 +5,7 @@
 
 <author> Ryan Kidd </author>
 <description>
-	The Bose-Hubbard model for the driven dimer in initial number state with 1000 total particles. This script evolves a quantum state in the number state basis.
+	The Bose-Hubbard model for the driven dimer in initial number state. This script evolves a quantum state in the number state basis.
 </description>
 
 <features>
@@ -24,7 +24,7 @@
 		<argument name="mu" type="real" default_value = "0.2" />
 		<argument name="omega" type="real" default_value = "1.37" />
 		<argument name="interval" type="real" default_value = "100" />
-		<argument name="N" type="real" default_value = "1000" />
+		<argument name="N" type="integer" default_value = "1000" />
 		<argument name="number_state" type="integer" default_value = "0" />
 	</arguments>
 </features>
@@ -32,7 +32,7 @@
 <geometry>
 	<propagation_dimension> t </propagation_dimension>
 	<transverse_dimensions>
-		 <dimension name="n" type="integer" lattice="1001" domain="(0,1000)" />
+		 <dimension name="n" type="integer" domain="(0,N)" />
 	</transverse_dimensions>
 </geometry>
 
