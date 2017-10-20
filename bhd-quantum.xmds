@@ -50,9 +50,9 @@
 	<components> H_chi H_J1 H_J2 </components>
 	<initialisation>
 		<![CDATA[
-			H_chi(n => n) = chi*(n*(n-1) + (N-n)*(N-n-1));
-			H_J1(n => n) = sqrt(n*(N-n+1));
-			H_J2(n => n) = sqrt((n+1)*(N-n));
+			H_chi = chi*(n*(n-1) + (N-n)*(N-n-1));
+			H_J1 = sqrt(n*(N-n+1));
+			H_J2 = sqrt((n+1)*(N-n));
 		]]>
 	</initialisation>
 </vector>
@@ -79,7 +79,7 @@
 					n_minus_one = n % _lattice_n;
 				}
 
-				dpsi_dt(n => n) = i*(-H_chi(n => n)*psi(n => n) + Jt*(H_J1(n => n)*psi(n => n_minus_one) + H_J2(n => n)*psi(n => n_plus_one)));
+				dpsi_dt = i*(-H_chi(n => n)*psi(n => n) + Jt*(H_J1(n => n)*psi(n => n_minus_one) + H_J2(n => n)*psi(n => n_plus_one)));
 			]]>
 		</operators>
 	</integrate>
