@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simulation xmds-version="2">
+<name> bhd-poincare3 </name>
+
+<author> Ryan Kidd </author>
+<description>
+	The semiclassical Bose-Hubbard model for the driven dimer. This script obtains stroboscopic Poincare sections under the angle-angle projection.
+</description>
+
+<features>
+	<bing />
+	<auto_vectorise />
+	<globals>
+		<![CDATA[
+			real Jt;
+			real T;
+			real interval;
+		]]>
+	</globals>
+	<validation kind="run-time" />
+	<arguments>
+		<argument name="chi" type="real" default_value = "-0.001" />
+		<argument name="epsilon" type="real" default_value = "0.2" />
+		<argument name="frequency" type="real" default_value = "1.37" />
+		<argument name="N" type="real" default_value = "1000" />
+		<![CDATA[
+			interval = 200;
+		]]>
+	</arguments>
+</features>
+
+<geometry>
+	<propagation_dimension> t </propagation_dimension>
+	<transverse_dimensions>
+		<dimension name="n" lattice="101" domain="(0.0, N)" />
+	</transverse_dimensions>
+</geometry>
+
+<vector name="amplitudes" type="complex">
+	<components> a1 a2 </components>
+	<initialisation>
+		<![CDATA[
+			a1 = sqrt(n);
+			a2 = sqrt(N - n);
+		]]>
+	</initialisation>
+</vector>
+
+<sequence>
+	<integrate algorithm="ARK89" interval="interval" tolerance="1e-7">
+		<samples>200</samples>
+		<operators>
+			<integration_vectors>amplitudes</integration_vectors>
+			<![CDATA[
+				T = 2*M_PI/frequency;
+				Jt = 1 + epsilon*cos(frequency*t*T);
+				da1_dt = (i*Jt*a2 - 2*i*chi*conj(a1)*a1*a1)*T;
+				da2_dt = (i*Jt*a1 - 2*i*chi*conj(a2)*a2*a2)*T;
+			]]>
+		</operators>
+	</integrate>
+</sequence>
+
+<output format="hdf5" filename="bhd-poincare3.xsil">
+	<sampling_group basis="n" initial_sample="yes">
+		<moments> phi theta </moments>
+		<dependencies>amplitudes</dependencies>
+		<![CDATA[
+			theta = acos((mod2(a2) - mod2(a1))/N);
+			phi = atan(Re(i*(conj(a2)*a1 - conj(a1)*a2)/(conj(a2)*a1 + conj(a1)*a2)));
+			// theta = arg(a2 - a1);
+			// phi = arg(i*(a2+a1));
+		]]>
+	</sampling_group>
+</output>
+
+</simulation>
