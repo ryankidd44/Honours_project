@@ -39,6 +39,7 @@
 		<argument name="interval" type="real" default_value = "100" />
 		<argument name="N" type="integer" default_value = "1000" />
 		<argument name="number_avg" type="real" default_value = "220" />
+		<argument name="phi" type="real" default_value = "0" />
 	</arguments>
 </features>
 
@@ -53,7 +54,7 @@
 	<components> psi </components>
 	<initialisation>
 		<![CDATA[
-				psi = exp(0.5*bincoeff(N,n) + n*log(sin(0.5*acos(1 - 2*number_avg/N))) + (N-n)*log(cos(0.5*acos(1 - 2*number_avg/N))));
+			psi = exp(0.5*bincoeff(N,n) + n*log(sin(0.5*acos(1 - 2*number_avg/N))) + (N-n)*log(cos(0.5*acos(1 - 2*number_avg/N))) - i*n*phi);
 		]]>
 	</initialisation>
 </vector>
