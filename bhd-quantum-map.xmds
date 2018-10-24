@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<simulation xmds-version="2">
+<name> bhd-quantum-map </name>
+
+<author> Ryan Kidd </author>
+<description>
+	The Bose-Hubbard model for the driven dimer in initial SU(2) coherent (Bloch) state with 1000 total particles. This script evolves a quantum state in the number state basis.
+</description>
+
+<features>
+	<auto_vectorise />
+	<benchmark />
+	<globals>
+		<![CDATA[
+			real Jt;
+			long n_plus_one;
+			long n_minus_one;
+
+			real bincoeff(int q, int r) {
+    		real bc = log(1);
+
+				if ( r > q - r )
+        	r = q - r;
+
+    		for (int j = 0; j < r; j++) {
+	        bc += log(q - j);
+	        bc -= log(j + 1);
+    		}
+    		return bc;
+			}
+		]]>
+	</globals>
+	<validation kind="run-time" />
+	<arguments>
+		<argument name="chi" type="real" default_value = "-0.001" />
+		<argument name="mu" type="real" default_value = "0.2" />
+		<argument name="omega" type="real" default_value = "1.37" />
+		<argument name="interval" type="real" default_value = "100" />
+		<argument name="N" type="integer" default_value = "1000" />
+	</arguments>
+</features>
+
+<geometry>
+	<propagation_dimension> t </propagation_dimension>
+	<transverse_dimensions>
+		 <dimension name="z" lattice="20" domain="(-N,N)" />
+		 <dimension name="phi" lattice="20" domain="(-M_PI,M_PI)" />
+		 <dimension name="n" type="integer" domain="(0,N)" />
+	</transverse_dimensions>
+</geometry>
+
+<driver name="distributed-mpi" />
+
+<vector name="state" type="complex" >
+	<components> psi </components>
+	<initialisation>
+		<![CDATA[
+			psi = exp(0.5*bincoeff(N,n) + n*log(sin(0.5*acos(z/N))) + (N-n)*log(cos(0.5*acos(z/N))) - i*n*phi);
+		]]>
+	</initialisation>
+</vector>
+
+<vector name="H_elements" type="real" >
+	<components> H_chi H_J1 H_J2 </components>
+	<initialisation>
+		<![CDATA[
+			H_chi = chi*(n*(n-1) + (N-n)*(N-n-1));
+			H_J1 = sqrt(n*(N-n+1));
+			H_J2 = sqrt((n+1)*(N-n));
+		]]>
+	</initialisation>
+</vector>
+
+<sequence>
+	<integrate algorithm="ARK45" interval="interval" tolerance="1E-8">
+		<samples> 1000 </samples>
+		<operators>
+			<integration_vectors> state </integration_vectors>
+			<dependencies> H_elements </dependencies>
+			<![CDATA[
+				Jt = 1 + mu*cos(omega*t);
+
+				if (n > 0 && n < 1001) {
+					n_plus_one = (n+1) % _lattice_n;
+					n_minus_one = (n-1) % _lattice_n;
+				}
+				else if (n > 0) {
+					n_plus_one = n % _lattice_n;
+					n_minus_one = (n-1) % _lattice_n;
+				}
+				else {
+					n_plus_one = (n+1) % _lattice_n;
+					n_minus_one = n % _lattice_n;
+				}
+
+				dpsi_dt = i*(-H_chi(n => n)*psi(n => n) + Jt*(H_J1(n => n)*psi(n => n_minus_one) + H_J2(n => n)*psi(n => n_plus_one)));
+			]]>
+		</operators>
+	</integrate>
+</sequence>
+
+<output format="hdf5" filename="bhd-quantum-map.xsil">
+	<sampling_group basis="n z phi" initial_sample="yes">
+		<moments> psi_R psi_I </moments>
+		<dependencies> state </dependencies>
+		<![CDATA[
+			psi_R = Re(psi);
+			psi_I = Im(psi);
+		]]>
+	</sampling_group>
+</output>
+
+</simulation>
