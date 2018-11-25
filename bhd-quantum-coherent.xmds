@@ -53,7 +53,7 @@
 	<components> psi </components>
 	<initialisation>
 		<![CDATA[
-				psi = exp(0.5*bincoeff(N,n) + n*log(sin(0.5*acos(1 - 2*number_avg/N))) + (N-n)*log(cos(0.5*acos(1 - 2*number_avg/N))));
+			psi = exp(0.5*bincoeff(N,n) + n*log(sin(0.5*acos(1 - 2*number_avg/N))) + (N-n)*log(cos(0.5*acos(1 - 2*number_avg/N))));
 		]]>
 	</initialisation>
 </vector>

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <simulation xmds-version="2">
-<name> bhd-coherent-numbers </name>
+<name> bhd-coherent-Dmap </name>
 
 <author> Ryan Kidd </author>
 <description>
-	The Bose-Hubbard model for the driven dimer with initial Bloch state and truncated Wigner evolution. This script obtains rounded occupation numbers of stochastic trajectories under a perturbation for the purpose of calculating the Bhattacharyya distance.
+	The Bose-Hubbard model for the driven dimer with initial Bloch state and truncated Wigner evolution. This script obtains rounded occupation numbers of stochastic trajectories under a perturbation across the phase space for the purpose of calculating a Bhattacharyya distance colour map.
 </description>
 
 <features>
@@ -22,16 +22,14 @@
 	<validation kind="run-time" />
 	<arguments>
 		<argument name="chi" type="real" default_value = "-0.001" />
-		<argument name="pert" type="real" default_value = "-0.01" />
+		<argument name="pert" type="real" default_value = "-0.0001" />
 		<argument name="J" type="real" default_value = "1" />
 		<argument name="epsilon" type="real" default_value = "0.2" />
 		<argument name="frequency" type="real" default_value = "1.37" />
 		<argument name="N" type="real" default_value = "1000" />
-		<argument name="n" type="real" default_value = "220" />
-		<argument name="interval" type="real" default_value = "10" />
+		<argument name="interval" type="real" default_value = "20" />
 		<![CDATA[
 			pchi = chi*(1 + pert);
-			tpole = asin(sqrt(n/N));
 			p2 = 0.5*sqrt(2*N + 1 + 2*sqrt(N*N + N));
 		]]>
 	</arguments>
@@ -41,6 +39,8 @@
 	<propagation_dimension> t </propagation_dimension>
 	<transverse_dimensions>
 		<dimension name="trajectories" type="integer" lattice="10000" domain="(1,10000)" />
+		<dimension name="z" lattice="100" domain="(-0.85, 0.85)" />
+		<dimension name="phi" lattice="100" domain="(-0.5, 0.5)" />
 	</transverse_dimensions>
 </geometry>
 
@@ -57,10 +57,12 @@
 <vector name="amplitudes" type="complex">
 	<components> a1 a2 pa1 pa2 </components>
 	<initialisation>
-		<dependencies> noise </dependencies>
+		<dependencies> noiseGauss noiseUnif </dependencies>
 		<![CDATA[
-			a1 = cos(tpole)*0.5*(da1r + i*da1i) + sin(tpole)*(p2 + da2/(4*p2)) * (cos(2*M_PI*theta2) + i*sin(2*M_PI*theta2));
-			a2 = -sin(tpole)*0.5*(da1r + i*da1i) + cos(tpole)*(p2 + da2/(4*p2)) * (cos(2*M_PI*theta2) + i*sin(2*M_PI*theta2));
+			a1 = (cos(asin(sqrt(0.5-X/(X*X+Y*Y+1))))*0.5*(da1r + i*da1i) + sin(asin(sqrt(0.5-X/(X*X+Y*Y+1))))*(p2 + da2/(4*p2)) * (cos(2*M_PI*theta2) + i*sin(2*M_PI*theta2))) * (cos(atan(2*Y/(1-X*X-Y*Y))/2) - i*sin(atan(2*Y/(1-X*X-Y*Y))/2));
+
+			a2 = (-sin(asin(sqrt(0.5-X/(X*X+Y*Y+1))))*0.5*(da1r + i*da1i) + cos(asin(sqrt(0.5-X/(X*X+Y*Y+1))))*(p2 + da2/(4*p2)) * (cos(2*M_PI*theta2) + i*sin(2*M_PI*theta2))) * (cos(atan(2*Y/(1-X*X-Y*Y))/2) + i*sin(atan(2*Y/(1-X*X-Y*Y))/2));
+
 			pa1 = a1;
 			pa2 = a2;
 		]]>
@@ -69,7 +71,7 @@
 
 <sequence>
 	<integrate algorithm="ARK45" interval="interval" tolerance="1e-5" >
-		<samples> 1000 </samples>
+		<samples> 1 </samples>
 		<operators>
 			<integration_vectors> amplitudes </integration_vectors>
 			<![CDATA[
@@ -83,10 +85,10 @@
 	</integrate>
 </sequence>
 
-<output format="hdf5" filename="bhd-coherent-numbers.xsil">
-	<sampling_group basis="trajectories" initial_sample="yes">
-		<moments> n1 pn1 </moments>
+<output format="hdf5" filename="bhd-coherent-Dmap.xsil">
+	<sampling_group basis="X Y trajectories" initial_sample="yes">
 		<dependencies> amplitudes </dependencies>
+		<moments> n1 pn1 </moments>
 		<![CDATA[
 			n1 = round(mod2(a1) - 0.5);
 			pn1 = round(mod2(pa1) - 0.5);

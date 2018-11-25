@@ -23,11 +23,10 @@
 	</globals>
 	<validation kind="run-time" />
 	<arguments>
-		<argument name="chi" type="real" default_value = "-0.001" />
+		<argument name="chi" type="real" default_value = "-1" />
 		<argument name="J" type="real" default_value = "1.0" />
 		<argument name="epsilon" type="real" default_value = "0.2" />
 		<argument name="frequency" type="real" default_value = "1.37" />
-		<argument name="N" type="real" default_value = "1000" />
 		<![CDATA[
 			interval = 200*2*M_PI/frequency;
 		]]>
@@ -37,7 +36,8 @@
 <geometry>
 	<propagation_dimension> t </propagation_dimension>
 	<transverse_dimensions>
-		<dimension name="n" lattice="101" domain="(0.0, N)" />
+		<dimension name="n" lattice="10" domain="(0, 1)" />
+		<dimension name="phase" lattice="20" domain="(-M_PI, M_PI)" />
 	</transverse_dimensions>
 </geometry>
 
@@ -45,8 +45,10 @@
 	<components> a1 a2 </components>
 	<initialisation>
 		<![CDATA[
+			// a1 = sqrt(0.5);
+			// a2 = sqrt(0.5)*exp(n*i);
 			a1 = sqrt(n);
-			a2 = sqrt(N - n);
+			a2 = sqrt(1 - n)*exp(i*phase);
 		]]>
 	</initialisation>
 </vector>
@@ -66,12 +68,13 @@
 </sequence>
 
 <output format="hdf5" filename="bhd-poincare2.xsil">
-	<sampling_group basis="n" initial_sample="yes">
-		<moments> z theta </moments>
+	<sampling_group basis="n phase" initial_sample="no">
+		<moments> z phi </moments>
 		<dependencies>amplitudes</dependencies>
 		<![CDATA[
-			z = (mod2(a2) - mod2(a1))/N;
-			theta = (arg(a2) - arg(a1))/M_PI;
+			z = 0.5*(mod2(a2) - mod2(a1));
+			phi = (arg(a2) - arg(a1))/M_PI;
+			// phi = atan(Re(i*(conj(a2)*a1 - conj(a1)*a2)/(conj(a2)*a1 + conj(a1)*a2)));
 		]]>
 	</sampling_group>
 </output>

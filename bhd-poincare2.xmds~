@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE simulation [
+<!ENTITY Npts "64">
+<!ENTITY L "3.0e-5">
+]>
 
 <simulation xmds-version="2">
-<name> bhd-poincare4 </name>
+<name> bhd-poincare2 </name>
 
 <author> Ryan Kidd </author>
 <description>
-	The semiclassical Bose-Hubbard model for the driven dimer. This script obtains a series of stroboscopic Poincare sections under the action-angle projection.
+	The semiclassical Bose-Hubbard model for the driven dimer. This script obtains stroboscopic Poincare sections under the action-angle projection.
 </description>
 
 <features>
@@ -15,15 +19,17 @@
 		<![CDATA[
 			real Jt;
 			real interval;
-			real T;
 		]]>
 	</globals>
 	<validation kind="run-time" />
 	<arguments>
-		<argument name="chi" type="real" default_value = "-1" />
-		<argument name="mu" type="real" default_value = "0.2" />
+		<argument name="chi" type="real" default_value = "-0.001" />
+		<argument name="J" type="real" default_value = "1.0" />
+		<argument name="epsilon" type="real" default_value = "0.2" />
+		<argument name="frequency" type="real" default_value = "1.37" />
+		<argument name="N" type="real" default_value = "1000" />
 		<![CDATA[
-			interval = 100;
+			interval = 200*2*M_PI/frequency;
 		]]>
 	</arguments>
 </features>
@@ -31,8 +37,7 @@
 <geometry>
 	<propagation_dimension> t </propagation_dimension>
 	<transverse_dimensions>
-		<dimension name="n" lattice="51" domain="(0, 1)" />
-		<dimension name="frequency" lattice="9" domain="(0.5, 5)" />
+		<dimension name="n" lattice="101" domain="(0.0, N)" />
 	</transverse_dimensions>
 </geometry>
 
@@ -40,33 +45,32 @@
 	<components> a1 a2 </components>
 	<initialisation>
 		<![CDATA[
-			a1 = sqrt(n)*exp(i*M_PI);
-			a2 = sqrt(1 - n);
+			a1 = sqrt(n);
+			a2 = sqrt(N - n);
 		]]>
 	</initialisation>
 </vector>
 
 <sequence>
 	<integrate algorithm="ARK89" interval="interval" tolerance="1e-7">
-		<samples>100</samples>
+		<samples>200</samples>
 		<operators>
 			<integration_vectors>amplitudes</integration_vectors>
 			<![CDATA[
-				T = 2*M_PI/frequency;
-				Jt = 1 + mu*cos(frequency*t*T);
-				da1_dt = (i*Jt*a2 - 2*i*chi*conj(a1)*a1*a1)*T;
-				da2_dt = (i*Jt*a1 - 2*i*chi*conj(a2)*a2*a2)*T;
+				Jt = J*(1.0 + epsilon*cos(frequency*t));
+				da1_dt = i*Jt*a2 - 2*i*chi*conj(a1)*a1*a1;
+				da2_dt = i*Jt*a1 - 2*i*chi*conj(a2)*a2*a2;
 			]]>
 		</operators>
 	</integrate>
 </sequence>
 
-<output format="hdf5" filename="bhd-poincare4.xsil">
-	<sampling_group basis="n frequency" initial_sample="yes">
+<output format="hdf5" filename="bhd-poincare2.xsil">
+	<sampling_group basis="n" initial_sample="yes">
 		<moments> z theta </moments>
 		<dependencies>amplitudes</dependencies>
 		<![CDATA[
-			z = mod2(a2) - mod2(a1);
+			z = (mod2(a2) - mod2(a1))/N;
 			theta = (arg(a2) - arg(a1))/M_PI;
 		]]>
 	</sampling_group>

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <simulation xmds-version="2">
-<name> bhd-quantum </name>
+<name> bhd-quantum-coherent2 </name>
 
 <author> Ryan Kidd </author>
 <description>
-	The Bose-Hubbard model for the driven dimer in initial number state. This script evolves a quantum state in the number state basis.
+	The Bose-Hubbard model for the driven dimer in initial SU(2) coherent (Bloch) state with 1000 total particles. This script evolves two initially identical quantum states in the number state basis under slightly perturbed Hamiltonians.
 </description>
 
 <features>
@@ -17,17 +17,31 @@
 			real pchi;
 			long n_plus_one;
 			long n_minus_one;
+
+			real bincoeff(int q, int r) {
+    		real bc = log(1);
+
+				if ( r > q - r )
+        	r = q - r;
+
+    		for (int j = 0; j < r; j++) {
+	        bc += log(q - j);
+	        bc -= log(j + 1);
+    		}
+    		return bc;
+			}
 		]]>
 	</globals>
 	<validation kind="run-time" />
 	<arguments>
 		<argument name="chi" type="real" default_value = "-0.001" />
-		<argument name="pert" type="real" default_value = "0.001" />
+		<argument name="pert" type="real" default_value = "-0.0001" />
 		<argument name="mu" type="real" default_value = "0.2" />
 		<argument name="omega" type="real" default_value = "1.37" />
 		<argument name="interval" type="real" default_value = "100" />
 		<argument name="N" type="integer" default_value = "1000" />
-		<argument name="number_state" type="integer" default_value = "0" />
+		<argument name="number_avg" type="real" default_value = "220" />
+		<argument name="phi" type="real" default_value = "0" />
 		<![CDATA[
 			pchi = chi*(1 + pert);
 		]]>
@@ -45,8 +59,7 @@
 	<components> psi1 psi2 </components>
 	<initialisation>
 		<![CDATA[
-			psi1 = 0;
-			psi1(n => number_state) = 1;
+			psi1 = exp(0.5*bincoeff(N,n) + n*log(sin(0.5*acos(1 - 2*number_avg/N))) + (N-n)*log(cos(0.5*acos(1 - 2*number_avg/N))) - i*n*phi);
 			psi2 = psi1;
 		]]>
 	</initialisation>
@@ -65,8 +78,8 @@
 </vector>
 
 <sequence>
-	<integrate algorithm="ARK45" interval="interval" tolerance="1e-4">
-		<samples> 1000 </samples>
+	<integrate algorithm="ARK45" interval="interval" tolerance="1E-7">
+		<samples> 100 </samples>
 		<operators>
 			<integration_vectors> state </integration_vectors>
 			<dependencies> H_elements </dependencies>
@@ -93,7 +106,7 @@
 	</integrate>
 </sequence>
 
-<output format="hdf5" filename="bhd-quantum.xsil">
+<output format="hdf5" filename="bhd-quantum-coherent2.xsil">
 	<sampling_group basis="n" initial_sample="yes">
 		<moments> psi1_R psi1_I psi2_R psi2_I </moments>
 		<dependencies> state </dependencies>
