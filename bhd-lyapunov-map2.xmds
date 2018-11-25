@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <simulation xmds-version="2">
-<name> bhd-lyapunov-map </name>
+<name> bhd-lyapunov-map2 </name>
 
 <author> Ryan Kidd </author>
 <description>
@@ -9,7 +9,6 @@
 </description>
 
 <features>
-	<openmp />
 	<auto_vectorise />
 	<globals>
 		<![CDATA[
@@ -18,56 +17,54 @@
 	</globals>
 	<validation kind="run-time" />
 	<arguments>
-		<argument name="chi" type="real" default_value = "-0.001" />
+		<argument name="U" type="real" default_value = "-0.001" />
 		<argument name="J" type="real" default_value = "1" />
-		<argument name="epsilon" type="real" default_value = "0.2" />
-		<argument name="frequency" type="real" default_value = "1.37" />
+		<argument name="mu" type="real" default_value = "0.2" />
+		<argument name="omega" type="real" default_value = "1.37" />
 		<argument name="N" type="real" default_value = "1000" />
 		<argument name="interval" type="real" default_value = "229.313332379" />
-		<argument name="p" type="real" default_value = "1E-4" />
+		<argument name="pert" type="real" default_value = "1E-5" />
 	</arguments>
 </features>
 
 <geometry>
 	<propagation_dimension> t </propagation_dimension>
 	<transverse_dimensions>
-		<dimension name="X" lattice="1000" domain="(-0.85, 0.85)" />
-		<dimension name="Y" lattice="1000" domain="(-0.5, 0.5)" />
+		<dimension name="z" lattice="40" domain="(-0.5*N+1E-2, 0.5*N)" />
+		<dimension name="phi" lattice="40" domain="(-M_PI, M_PI)" />
 	</transverse_dimensions>
 </geometry>
-
-<driver name="distributed-mpi" />
 
 <vector name="amplitudes" type="complex" >
 	<components> a1 a2 pa1 pa2 </components>
 	<initialisation>
 		<![CDATA[
-			a1 = sqrt(N*(0.5 - X/(X*X+Y*Y+1)));
-			a2 = sqrt(N*(0.5 + X/(X*X+Y*Y+1))) * (cos(atan(-2*Y/(X*X+Y*Y-1))) + i*sin(atan(-2*Y/(X*X+Y*Y-1))));
-			pa1 = a1 + p;
-			pa2 = sqrt(mod2(a2) - p*(p+2*a1)) * (cos(atan(-2*Y/(X*X+Y*Y-1))) + i*sin(atan(-2*Y/(X*X+Y*Y-1))));
+			a1 = sqrt(0.5*N-z);
+			a2 = sqrt(0.5*N+z)*exp(i*phi);
+			pa1 = sqrt(0.5*N-z+pert);
+			pa2 = sqrt(0.5*N+z-pert)*exp(i*phi);
 		]]>
 	</initialisation>
 </vector>
 
 <sequence>
-	<integrate algorithm="ARK45" interval="interval" tolerance="1e-9">
-		<samples> 1 </samples>
+	<integrate algorithm="ARK45" interval="interval" tolerance="1e-8">
+		<samples> 50 </samples>
 		<operators>
 			<integration_vectors> amplitudes </integration_vectors>
 			<![CDATA[
-				Jt = J*(1 + epsilon*cos(frequency*t));
-				da1_dt = i*Jt*a2 - 2*i*chi*mod2(a1)*a1;
-				da2_dt = i*Jt*a1 - 2*i*chi*mod2(a2)*a2;
-				dpa1_dt = i*Jt*pa2 - 2*i*chi*mod2(pa1)*pa1;
-				dpa2_dt = i*Jt*pa1 - 2*i*chi*mod2(pa2)*pa2;
+				Jt = J*(1 + mu*cos(omega*t));
+				da1_dt = i*Jt*a2 - 2*i*U*mod2(a1)*a1;
+				da2_dt = i*Jt*a1 - 2*i*U*mod2(a2)*a2;
+				dpa1_dt = i*Jt*pa2 - 2*i*U*mod2(pa1)*pa1;
+				dpa2_dt = i*Jt*pa1 - 2*i*U*mod2(pa2)*pa2;
 			]]>
 		</operators>
 	</integrate>
 </sequence>
 
-<output format="hdf5" filename="bhd-lyapunov-map.xsil">
-	<sampling_group basis="X Y" initial_sample="yes">
+<output format="hdf5" filename="bhd-lyapunov-map2.xsil">
+	<sampling_group basis="z phi" initial_sample="yes">
 		<moments> L </moments>
 		<dependencies> amplitudes </dependencies>
 		<![CDATA[

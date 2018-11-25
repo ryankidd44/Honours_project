@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <simulation xmds-version="2">
-<name> bhd-quantum-coherent </name>
+<name> bhd-quantum-map </name>
 
 <author> Ryan Kidd </author>
 <description>
@@ -38,22 +38,25 @@
 		<argument name="omega" type="real" default_value = "1.37" />
 		<argument name="interval" type="real" default_value = "100" />
 		<argument name="N" type="integer" default_value = "1000" />
-		<argument name="number_avg" type="real" default_value = "220" />
 	</arguments>
 </features>
 
 <geometry>
 	<propagation_dimension> t </propagation_dimension>
 	<transverse_dimensions>
+		 <dimension name="z" lattice="20" domain="(-N,N)" />
+		 <dimension name="phi" lattice="20" domain="(-M_PI,M_PI)" />
 		 <dimension name="n" type="integer" domain="(0,N)" />
 	</transverse_dimensions>
 </geometry>
+
+<driver name="distributed-mpi" />
 
 <vector name="state" type="complex" >
 	<components> psi </components>
 	<initialisation>
 		<![CDATA[
-			psi = exp(0.5*bincoeff(N,n) + n*log(sin(0.5*acos(1 - 2*number_avg/N))) + (N-n)*log(cos(0.5*acos(1 - 2*number_avg/N))));
+			psi = exp(0.5*bincoeff(N,n) + n*log(sin(0.5*acos(z/N))) + (N-n)*log(cos(0.5*acos(z/N))) - i*n*phi);
 		]]>
 	</initialisation>
 </vector>
@@ -97,8 +100,8 @@
 	</integrate>
 </sequence>
 
-<output format="hdf5" filename="bhd-quantum.xsil">
-	<sampling_group basis="n" initial_sample="yes">
+<output format="hdf5" filename="bhd-quantum-map.xsil">
+	<sampling_group basis="n z phi" initial_sample="yes">
 		<moments> psi_R psi_I </moments>
 		<dependencies> state </dependencies>
 		<![CDATA[

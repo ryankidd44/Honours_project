@@ -1,8 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE simulation [
-<!ENTITY Npts "64">
-<!ENTITY L "3.0e-5">
-]>
 
 <simulation xmds-version="2">
 <name> bhd-lyapunov </name>
@@ -21,14 +17,14 @@
 		]]>
 	</globals>
 	<arguments>
-		<argument name="chi" type="real" default_value = "-0.001" />
-		<argument name="J" type="real" default_value = "1" />
-		<argument name="epsilon" type="real" default_value = "0.2" />
-		<argument name="frequency" type="real" default_value = "1.37" />
+		<argument name="U" type="real" default_value = "-0.001" />
+		<argument name="mu" type="real" default_value = "0.2" />
+		<argument name="omega" type="real" default_value = "1.37" />
 		<argument name="N" type="real" default_value = "1000" />
-		<argument name="n" type="real" default_value = "0.0" />
-		<argument name="interval" type="real" default_value = "200.0" />
-		<argument name="p" type="real" default_value = "0.0000000001" />
+		<argument name="n" type="real" default_value = "0" />
+		<argument name="phi" type="real" default_value = "0" />
+		<argument name="interval" type="real" default_value = "229.313332379" />
+		<argument name="pert" type="real" default_value = "1E-4" />
 	</arguments>
 </features>
 
@@ -41,24 +37,26 @@
 	<initialisation>
 		<![CDATA[
 			a1 = sqrt(n);
-			a2 = sqrt(N-n);
-			pa1 = a1 + p;
-			pa2 = sqrt(mod2(a2) - p*(p+2*a1));
+			a2 = sqrt(N-n)*exp(i*phi);
+			pa1 = sqrt(n+pert);
+			pa2 = sqrt(N-n-pert)*exp(i*phi);
+			// pa1 = a1 + p;
+			// pa2 = sqrt(mod2(a2) - p*(p+2*a1));
 		]]>
 	</initialisation>
 </vector>
 
 <sequence>
-	<integrate algorithm="ARK45" interval="interval" tolerance="1e-9">
+	<integrate algorithm="ARK45" interval="interval" tolerance="1E-8">
 		<samples> 1000 </samples>
 		<operators>
 			<integration_vectors> amplitudes </integration_vectors>
 			<![CDATA[
-				Jt = J*(1 + epsilon*cos(frequency*t));
-				da1_dt = i*Jt*a2 - 2*i*chi*mod2(a1)*a1;
-				da2_dt = i*Jt*a1 - 2*i*chi*mod2(a2)*a2;
-				dpa1_dt = i*Jt*pa2 - 2*i*chi*mod2(pa1)*pa1;
-				dpa2_dt = i*Jt*pa1 - 2*i*chi*mod2(pa2)*pa2;
+				Jt = 1 + mu*cos(omega*t);
+				da1_dt = i*Jt*a2 - 2*i*U*mod2(a1)*a1;
+				da2_dt = i*Jt*a1 - 2*i*U*mod2(a2)*a2;
+				dpa1_dt = i*Jt*pa2 - 2*i*U*mod2(pa1)*pa1;
+				dpa2_dt = i*Jt*pa1 - 2*i*U*mod2(pa2)*pa2;
 			]]>
 		</operators>
 	</integrate>
