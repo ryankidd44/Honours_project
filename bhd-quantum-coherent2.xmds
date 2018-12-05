@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <simulation xmds-version="2">
-<name> bhd-quantum-coherent </name>
+<name> bhd-quantum-coherent2 </name>
 
 <author> Ryan Kidd </author>
 <description>
-	The Bose-Hubbard model for the driven dimer in initial SU(2) coherent (Bloch) state with 1000 total particles. This script evolves a quantum state in the number state basis.
+	The Bose-Hubbard model for the driven dimer in initial SU(2) coherent (Bloch) state with 1000 total particles. This script evolves two initially identical quantum states in the number state basis under slightly perturbed Hamiltonians.
 </description>
 
 <features>
@@ -14,6 +14,7 @@
 	<globals>
 		<![CDATA[
 			real Jt;
+			real pchi;
 			long n_plus_one;
 			long n_minus_one;
 
@@ -34,12 +35,16 @@
 	<validation kind="run-time" />
 	<arguments>
 		<argument name="chi" type="real" default_value = "-0.001" />
+		<argument name="pert" type="real" default_value = "-0.0001" />
 		<argument name="mu" type="real" default_value = "0.2" />
 		<argument name="omega" type="real" default_value = "1.37" />
 		<argument name="interval" type="real" default_value = "100" />
 		<argument name="N" type="integer" default_value = "1000" />
 		<argument name="number_avg" type="real" default_value = "220" />
 		<argument name="phi" type="real" default_value = "0" />
+		<![CDATA[
+			pchi = chi*(1 + pert);
+		]]>
 	</arguments>
 </features>
 
@@ -51,19 +56,21 @@
 </geometry>
 
 <vector name="state" type="complex" >
-	<components> psi </components>
+	<components> psi1 psi2 </components>
 	<initialisation>
 		<![CDATA[
-			psi = exp(0.5*bincoeff(N,n) + n*log(sin(0.5*acos(1 - 2*number_avg/N))) + (N-n)*log(cos(0.5*acos(1 - 2*number_avg/N))) - i*n*phi);
+			psi1 = exp(0.5*bincoeff(N,n) + n*log(sin(0.5*acos(1 - 2*number_avg/N))) + (N-n)*log(cos(0.5*acos(1 - 2*number_avg/N))) - i*n*phi);
+			psi2 = psi1;
 		]]>
 	</initialisation>
 </vector>
 
 <vector name="H_elements" type="real" >
-	<components> H_chi H_J1 H_J2 </components>
+	<components> H_chi H_pchi H_J1 H_J2 </components>
 	<initialisation>
 		<![CDATA[
 			H_chi = chi*(n*(n-1) + (N-n)*(N-n-1));
+			H_pchi = pchi*(n*(n-1) + (N-n)*(N-n-1));
 			H_J1 = sqrt(n*(N-n+1));
 			H_J2 = sqrt((n+1)*(N-n));
 		]]>
@@ -71,8 +78,8 @@
 </vector>
 
 <sequence>
-	<integrate algorithm="ARK45" interval="interval" tolerance="1E-8">
-		<samples> 1000 </samples>
+	<integrate algorithm="ARK45" interval="interval" tolerance="1E-7">
+		<samples> 100 </samples>
 		<operators>
 			<integration_vectors> state </integration_vectors>
 			<dependencies> H_elements </dependencies>
@@ -92,19 +99,22 @@
 					n_minus_one = n % _lattice_n;
 				}
 
-				dpsi_dt = i*(-H_chi(n => n)*psi(n => n) + Jt*(H_J1(n => n)*psi(n => n_minus_one) + H_J2(n => n)*psi(n => n_plus_one)));
+				dpsi1_dt = i*(-H_chi(n => n)*psi1(n => n) + Jt*(H_J1(n => n)*psi1(n => n_minus_one) + H_J2(n => n)*psi1(n => n_plus_one)));
+				dpsi2_dt = i*(-H_pchi(n => n)*psi2(n => n) + Jt*(H_J1(n => n)*psi2(n => n_minus_one) + H_J2(n => n)*psi2(n => n_plus_one)));
 			]]>
 		</operators>
 	</integrate>
 </sequence>
 
-<output format="hdf5" filename="bhd-quantum.xsil">
+<output format="hdf5" filename="bhd-quantum-coherent2.xsil">
 	<sampling_group basis="n" initial_sample="yes">
-		<moments> psi_R psi_I </moments>
+		<moments> psi1_R psi1_I psi2_R psi2_I </moments>
 		<dependencies> state </dependencies>
 		<![CDATA[
-			psi_R = Re(psi);
-			psi_I = Im(psi);
+			psi1_R = Re(psi1);
+			psi1_I = Im(psi1);
+			psi2_R = Re(psi2);
+			psi2_I = Im(psi2);
 		]]>
 	</sampling_group>
 </output>

@@ -32,8 +32,8 @@
 		<argument name="omega" type="real" default_value = "1.37" />
 		<![CDATA[
 			interval = 200*2*M_PI/omega;
-			U1 = 0.5*U*(1 - gsl_sf_bessel_J0(2*mu/omega));
-			U2 = 0.5*U*(1 + gsl_sf_bessel_J0(2*mu/omega));
+			U1 = U*(1 - gsl_sf_bessel_J0(4*mu/omega));
+			U2 = U*(1 + gsl_sf_bessel_J0(4*mu/omega));
 			// U1 = 0.5*U*(1-0.765197686);
 			// U2 = 0.5*U*(1+0.765197686);
 		]]>
@@ -44,7 +44,7 @@
 	<propagation_dimension> t </propagation_dimension>
 	<transverse_dimensions>
 		<dimension name="z0" lattice="10" domain="(-0.49,0.49)" />
-		<dimension name="phi0" lattice="20" domain="(-M_PI, M_PI)" />
+		<dimension name="phi0" lattice="10" domain="(-M_PI, M_PI)" />
 	</transverse_dimensions>
 </geometry>
 
@@ -61,16 +61,16 @@
 </vector>
 
 <sequence>
-	<integrate algorithm="ARK45" interval="interval" tolerance="1e-6">
+	<integrate algorithm="ARK45" interval="interval" tolerance="1e-7">
 		<samples> 200 </samples>
 		<operators>
 			<integration_vectors> amplitudes </integration_vectors>
 			<![CDATA[
 				Jt = J*(1.0 + mu*cos(omega*t));
-				dz_dt = -Jt*sqrt(0.25 - z*z)*sin(phi);
-				dphi_dt = 2*U*z + Jt*z/sqrt(0.25 - z*z)*cos(phi);
-				dzf_dt = -sqrt(0.25 - zf*zf)*sin(phif) - U1*(0.25-zf*zf)*cos(phif)*sin(phif);
-				dphif_dt = 2*U2*zf + zf/sqrt(0.25 - zf*zf)*cos(phif) - 2*U1*zf*sin(phif)*sin(phif);
+				dz_dt = 2*Jt*sqrt(0.25 - z*z)*sin(phi);
+				dphi_dt = -4*U*z - 2*Jt*z/sqrt(0.25 - z*z)*cos(phi);
+				dzf_dt = 2*sqrt(0.25 - zf*zf)*sin(phif) + 2*U1*(0.25-zf*zf)*cos(phif)*sin(phif);
+				dphif_dt = -2*U2*zf - 2*zf/sqrt(0.25 - zf*zf)*cos(phif) + 2*U1*zf*sin(phif)*sin(phif);
 			]]>
 		</operators>
 	</integrate>

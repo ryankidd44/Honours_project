@@ -32,7 +32,7 @@
 	<propagation_dimension> t </propagation_dimension>
 	<transverse_dimensions>
 		<dimension name="n" lattice="51" domain="(0, 1)" />
-		<dimension name="frequency" lattice="9" domain="(0.5, 5)" />
+		<dimension name="frequency" lattice="9" domain="(0.5, 4.5)" />
 	</transverse_dimensions>
 </geometry>
 
