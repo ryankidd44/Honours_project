@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<simulation xmds-version="2">
+<name> bhd-poincare6 </name>
+
+<author> Ryan Kidd </author>
+<description>
+	The semiclassical Bose-Hubbard model for the driven dimer. This script obtains a series of stroboscopic Poincare sections under the action-angle projection.
+</description>
+
+<features>
+	<bing />
+	<auto_vectorise />
+	<globals>
+		<![CDATA[
+			real Jt;
+			real T;
+		]]>
+	</globals>
+	<validation kind="run-time" />
+	<arguments>
+		<argument name="chi" type="real" default_value = "-1" />
+		<argument name="mu" type="real" default_value = "0.2" />
+		<argument name="omega" type="real" default_value = "1.37" />
+		<argument name="interval" type="real" default_value = "300" />
+	</arguments>
+</features>
+
+<geometry>
+	<propagation_dimension> t </propagation_dimension>
+	<transverse_dimensions>
+		<dimension name="phase" lattice="21" domain="(-M_PI, M_PI)" />
+	</transverse_dimensions>
+</geometry>
+
+<vector name="amplitudes" type="complex">
+	<components> a1 a2 </components>
+	<initialisation>
+		<![CDATA[
+			a1 = sqrt(0.5);
+			a2 = sqrt(0.5)*exp(i*phase);
+		]]>
+	</initialisation>
+</vector>
+
+<sequence>
+	<integrate algorithm="ARK89" interval="interval" tolerance="1e-7">
+		<samples>300</samples>
+		<operators>
+			<integration_vectors>amplitudes</integration_vectors>
+			<![CDATA[
+				T = 2*M_PI/omega;
+				Jt = 1 + mu*cos(2*M_PI*t);
+				da1_dt = i*(Jt*a2 - 2*chi*mod2(a1)*a1)*T;
+				da2_dt = i*(Jt*a1 - 2*chi*mod2(a2)*a2)*T;
+			]]>
+		</operators>
+	</integrate>
+</sequence>
+
+<output format="hdf5" filename="bhd-poincare6.xsil">
+	<sampling_group basis="phase" initial_sample="yes">
+		<moments> z theta </moments>
+		<dependencies>amplitudes</dependencies>
+		<![CDATA[
+			z = 0.5*(mod2(a2) - mod2(a1));
+			theta = (arg(a2) - arg(a1))/M_PI;
+		]]>
+	</sampling_group>
+</output>
+
+</simulation>
