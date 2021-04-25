@@ -21,7 +21,7 @@
 	</globals>
 	<validation kind="run-time" />
 	<arguments>
-		<argument name="chi" type="real" default_value = "-0.001" />
+		<argument name="chi" type="real" default_value = "0" />
 		<argument name="pert" type="real" default_value = "-0.01" />
 		<argument name="J" type="real" default_value = "1" />
 		<argument name="epsilon" type="real" default_value = "0.2" />
@@ -46,12 +46,8 @@
 
 <driver name="distributed-mpi" />
 
-<noise_vector name="noiseGauss" kind="gaussian" type="real" method="dsfmt" seed="791 207 830" dimensions="trajectories" >
-	<components> da1r da1i da2 </components>
-</noise_vector>
-
-<noise_vector name="noiseUnif" kind="uniform" type="real" method="dsfmt" seed="209 885 942" dimensions="trajectories" >
-	<components> theta2 </components>
+<noise_vector name="noiseGauss" kind="gaussian" type="complex" method="dsfmt" seed="791 207 830" dimensions="trajectories" >
+	<components> da11 da12 da13 da21 da22 da23 da31 da32 da33 </components>
 </noise_vector>
 
 <vector name="amplitudes" type="complex">
@@ -59,10 +55,15 @@
 	<initialisation>
 		<dependencies> noise </dependencies>
 		<![CDATA[
-			a1 = cos(tpole)*0.5*(da1r + i*da1i) + sin(tpole)*(p2 + da2/(4*p2)) * (cos(2*M_PI*theta2) + i*sin(2*M_PI*theta2));
-			a2 = -sin(tpole)*0.5*(da1r + i*da1i) + cos(tpole)*(p2 + da2/(4*p2)) * (cos(2*M_PI*theta2) + i*sin(2*M_PI*theta2));
-			pa1 = a1;
-			pa2 = a2;
+			a11 = da11/sqrt(2); 
+			a12 = da12/sqrt(2); 
+			a13 = da13/sqrt(2); 
+			a21 = da21/sqrt(2);
+			a22 = sqrt(N) + da22/sqrt(2);
+			a23 = da23/sqrt(2);
+			a31 = da31/sqrt(2);
+			a32 = da32/sqrt(2);
+			a33 = da33/sqrt(2);
 		]]>
 	</initialisation>
 </vector>
@@ -73,11 +74,9 @@
 		<operators>
 			<integration_vectors> amplitudes </integration_vectors>
 			<![CDATA[
-				Jt = J*(1 + epsilon*cos(frequency*t));
-				da1_dt = i*Jt*a2 - 2*i*chi*(mod2(a1) - 1)*a1;
-				da2_dt = i*Jt*a1 - 2*i*chi*(mod2(a2) - 1)*a2;
-				dpa1_dt = i*Jt*pa2 - 2*i*pchi*(mod2(pa1) - 1)*pa1;
-				dpa2_dt = i*Jt*pa1 - 2*i*pchi*(mod2(pa2) - 1)*pa2;
+				da11_dt = i*(a12 + a21 - chi*(mod2(a11) - 1)*a11);
+				da12_dt = i*(a11 + a22 + a13 - chi*(mod2(a12) - 1)*a12);
+				da13_dt = i*(a12 + a23 - chi*(mod2(a13) - 1)*a13);
 			]]>
 		</operators>
 	</integrate>

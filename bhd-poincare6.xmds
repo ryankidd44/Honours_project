@@ -22,14 +22,14 @@
 		<argument name="chi" type="real" default_value = "-1" />
 		<argument name="mu" type="real" default_value = "0.2" />
 		<argument name="omega" type="real" default_value = "1.37" />
-		<argument name="interval" type="real" default_value = "300" />
+		<argument name="interval" type="real" default_value = "1000" />
 	</arguments>
 </features>
 
 <geometry>
 	<propagation_dimension> t </propagation_dimension>
 	<transverse_dimensions>
-		<dimension name="phase" lattice="21" domain="(-M_PI, M_PI)" />
+		<dimension name="phase" lattice="52" domain="(-M_PI, M_PI)" />
 	</transverse_dimensions>
 </geometry>
 
@@ -45,7 +45,7 @@
 
 <sequence>
 	<integrate algorithm="ARK89" interval="interval" tolerance="1e-7">
-		<samples>300</samples>
+		<samples> 1000 </samples>
 		<operators>
 			<integration_vectors>amplitudes</integration_vectors>
 			<![CDATA[

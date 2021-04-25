@@ -1,8 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE simulation [
-<!ENTITY Npts "64">
-<!ENTITY L "3.0e-5">
-]>
 
 <simulation xmds-version="2">
 <name> bhd-coherent-moments </name>

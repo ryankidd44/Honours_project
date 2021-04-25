@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <simulation xmds-version="2">
-<name> bhd-poincare5 </name>
+<name> bhd-poincare6_thick </name>
 
 <author> Ryan Kidd </author>
 <description>
@@ -14,7 +14,6 @@
 	<globals>
 		<![CDATA[
 			real Jt;
-			real interval;
 			real T;
 		]]>
 	</globals>
@@ -22,17 +21,15 @@
 	<arguments>
 		<argument name="chi" type="real" default_value = "-1" />
 		<argument name="mu" type="real" default_value = "0.2" />
-		<![CDATA[
-			interval = 300;
-		]]>
+		<argument name="omega" type="real" default_value = "1.37" />
+		<argument name="interval" type="real" default_value = "20" />
 	</arguments>
 </features>
 
 <geometry>
 	<propagation_dimension> t </propagation_dimension>
 	<transverse_dimensions>
-		<dimension name="phase" lattice="20" domain="(-M_PI, M_PI)" />
-		<dimension name="frequency" lattice="9" domain="(0.1, 5)" />
+		<dimension name="phase" lattice="21" domain="(-M_PI, M_PI)" />
 	</transverse_dimensions>
 </geometry>
 
@@ -48,21 +45,21 @@
 
 <sequence>
 	<integrate algorithm="ARK89" interval="interval" tolerance="1e-7">
-		<samples>300</samples>
+		<samples>1000</samples>
 		<operators>
 			<integration_vectors>amplitudes</integration_vectors>
 			<![CDATA[
-				T = 2*M_PI/frequency;
-				Jt = 1 + mu*cos(frequency*t*T);
-				da1_dt = (i*Jt*a2 - 2*i*chi*conj(a1)*a1*a1)*T;
-				da2_dt = (i*Jt*a1 - 2*i*chi*conj(a2)*a2*a2)*T;
+				T = 2*M_PI/omega;
+				Jt = 1 + mu*cos(2*M_PI*t);
+				da1_dt = i*(Jt*a2 - 2*chi*mod2(a1)*a1)*T;
+				da2_dt = i*(Jt*a1 - 2*chi*mod2(a2)*a2)*T;
 			]]>
 		</operators>
 	</integrate>
 </sequence>
 
-<output format="hdf5" filename="bhd-poincare5.xsil">
-	<sampling_group basis="phase frequency" initial_sample="yes">
+<output format="hdf5" filename="bhd-poincare6.xsil">
+	<sampling_group basis="phase" initial_sample="yes">
 		<moments> z theta </moments>
 		<dependencies>amplitudes</dependencies>
 		<![CDATA[
