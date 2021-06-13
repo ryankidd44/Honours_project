@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <simulation xmds-version="2">
-<name> bhd-poincare6 </name>
+<name> bhd-SU2 </name>
 
 <author> Ryan Kidd </author>
 <description>
-	The semiclassical Bose-Hubbard model for the driven dimer. This script obtains a series of stroboscopic Poincare sections under the action-angle projection.
+	The semiclassical Bose-Hubbard model for the driven dimer. This script obtains stroboscopic Poincare sections under the action-angle projection.
 </description>
 
 <features>
@@ -19,33 +19,34 @@
 	</globals>
 	<validation kind="run-time" />
 	<arguments>
-		<argument name="chi" type="real" default_value = "-1" />
-		<argument name="mu" type="real" default_value = "0.2" />
-		<argument name="omega" type="real" default_value = "1.37" />
-		<argument name="interval" type="real" default_value = "10000" />
+		<argument name="chi" type="real" default_value = "-0.001" />
+		<argument name="J" type="real" default_value = "1.0" />
+		<argument name="mu" type="real" default_value = "1.5" />
+		<argument name="omega" type="real" default_value = "0.5" />
+		<argument name="N" type="real" default_value = "1000" />
+		<argument name="n" type="real" default_value = "220" />
+		<argument name="phi" type="real" default_value = "0" />
+		<argument name="interval" type="real" default_value = "100" />
 	</arguments>
 </features>
 
 <geometry>
 	<propagation_dimension> t </propagation_dimension>
-	<transverse_dimensions>
-		<dimension name="phase" lattice="52" domain="(-M_PI, M_PI)" />
-	</transverse_dimensions>
 </geometry>
 
 <vector name="amplitudes" type="complex">
 	<components> a1 a2 </components>
 	<initialisation>
 		<![CDATA[
-			a1 = sqrt(0.5);
-			a2 = sqrt(0.5)*exp(i*phase);
+			a1 = sqrt(n)*exp(i*phi);
+			a2 = sqrt(N - n);
 		]]>
 	</initialisation>
 </vector>
 
 <sequence>
 	<integrate algorithm="ARK89" interval="interval" tolerance="1e-7">
-		<samples> 10000 </samples>
+		<samples>100</samples>
 		<operators>
 			<integration_vectors>amplitudes</integration_vectors>
 			<![CDATA[
@@ -58,12 +59,12 @@
 	</integrate>
 </sequence>
 
-<output format="hdf5" filename="bhd-poincare6.xsil">
-	<sampling_group basis="phase" initial_sample="yes">
+<output format="hdf5" filename="bhd-SU2.xsil">
+	<sampling_group initial_sample="yes">
 		<moments> z theta </moments>
 		<dependencies>amplitudes</dependencies>
 		<![CDATA[
-			z = 0.5*(mod2(a2) - mod2(a1));
+			z = 0.5*(mod2(a2) - mod2(a1))/N;
 			theta = (arg(a2) - arg(a1))/M_PI;
 		]]>
 	</sampling_group>
