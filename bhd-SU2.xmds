@@ -59,9 +59,11 @@
 
 <output format="hdf5" filename="bhd-SU2.xsil">
 	<sampling_group initial_sample="yes">
-		<moments> z theta </moments>
+		<moments> x y z theta </moments>
 		<dependencies>amplitudes</dependencies>
 		<![CDATA[
+			x = 0.5*Re(conj(a2)*a1 + conj(a1)*a2);
+			y = 0.5*Re(i*(conj(a2)*a1 - conj(a1)*a2));
 			z = 0.5*(mod2(a2) - mod2(a1))/N;
 			theta = (arg(a2) - arg(a1))/M_PI;
 		]]>
